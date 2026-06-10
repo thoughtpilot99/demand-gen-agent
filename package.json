@@ -1,0 +1,33 @@
+{
+  "name": "demand-gen-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A demand gen agent that runs on Claude, manages your ad spend across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, and lives in your Slack.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "serve": "node dist/index.js",
+    "probe": "tsx scripts/probe-tools.ts",
+    "pacing": "tsx -e \"import('./src/jobs/pacing-watch.ts').then(m => m.runPacingWatch())\"",
+    "readout": "tsx -e \"import('./src/jobs/weekly-readout.ts').then(m => m.runWeeklyReadout())\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "@slack/bolt": "^4.4.0",
+    "dotenv": "^16.4.7",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

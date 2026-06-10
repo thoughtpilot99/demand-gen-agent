@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Demand Gen Agent · Build Guide · MetadataONE</title>
+<meta name="description" content="A demand gen agent that runs on Claude, manages your ad spend across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, and lives in your Slack. The whole build, packaged. Stand up your own." />
+<meta property="og:title" content="The Demand Gen Agent: runs on Claude, lives in your Slack" />
+<meta property="og:description" content="Wire it up once and you stop opening ad managers. The full build: agent, guardrails, Slack control, live dashboard." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="assets/agent-in-claude.png" />
+<link rel="icon" href="assets/metadataone-icon.jpeg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#ea580c; --orange-dark:#c2410c; --orange-deep:#9a3412; --orange-light:#fff7ed; --orange-soft:#fed7aa;
+    --mint:#2aa791; --mint-light:#e6faf5; --mint-edge:#9ee9da; --mint-dark:#15786a;
+    --slack:#4a154b; --slack-light:#f6eef5;
+    --ink:#111827; --ink-soft:#3b4453; --muted:#6b7280; --faint:#9aa1ad;
+    --line:#e9ebf0; --line-soft:#f1f3f7; --bg:#ffffff; --bg-soft:#faf9f7; --bg-muted:#f5f5f4; --code:#0f172a; --code2:#1e293b;
+    --good:#0f9d6b; --good-tint:#e7f7ef;
+    --shadow-card:0 1px 2px rgba(16,24,40,.04), 0 14px 34px -22px rgba(16,24,40,.22);
+    --shadow-soft:0 1px 2px rgba(16,24,40,.05), 0 10px 26px -20px rgba(16,24,40,.20);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:"Rubik",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg-soft);line-height:1.62;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;}
+  a{color:var(--orange-dark);}
+
+  .topnav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line);}
+  .topnav .inner{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 24px;overflow-x:auto;}
+  .topnav .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;letter-spacing:-0.01em;white-space:nowrap;}
+  .topnav .brand b{color:var(--orange);font-weight:800;}
+  .topnav .brand img{width:24px;height:24px;border-radius:7px;}
+  .topnav .links{display:flex;gap:4px;margin-left:auto;}
+  .topnav .links a{font-size:12.5px;font-weight:500;color:var(--ink-soft);text-decoration:none;padding:6px 10px;border-radius:8px;white-space:nowrap;}
+  .topnav .links a:hover{background:var(--orange-light);color:var(--orange-deep);}
+  .topnav .links a.cta{background:var(--ink);color:#fff;font-weight:600;}
+  @media (max-width:760px){.topnav .links{display:none;}}
+
+  .wrap{max-width:880px;margin:0 auto;background:var(--bg);box-shadow:0 0 60px -30px rgba(16,24,40,.25);}
+  @media (max-width:640px){.pad{padding:0 22px;}}
+
+  .cover{padding:58px 60px 46px;border-top:8px solid var(--orange);background:radial-gradient(820px 360px at 92% -14%,#ffe9d8 0%,rgba(255,233,216,0) 62%),var(--bg);}
+  .brandrow{display:flex;align-items:center;gap:13px;margin-bottom:38px;}
+  .brandrow img{width:42px;height:42px;border-radius:11px;box-shadow:0 6px 18px rgba(234,88,12,.22);}
+  .brandrow .wm{font-size:21px;font-weight:700;letter-spacing:-0.02em;}
+  .brandrow .wm b{color:var(--orange);font-weight:800;}
+  .eyebrow{color:var(--orange);font-size:11.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;}
+  .cover h1{font-size:50px;line-height:1.02;letter-spacing:-0.035em;font-weight:800;margin-bottom:18px;}
+  .cover h1 .ac{color:var(--orange);}
+  .cover .sub{font-size:18px;color:var(--ink-soft);max-width:620px;line-height:1.5;margin-bottom:34px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-soft);margin-bottom:30px;}
+  .stats .s{padding:16px 14px;text-align:center;border-right:1px solid var(--line);}
+  .stats .s:last-child{border-right:0;}
+  .stats .n{font-size:24px;font-weight:800;color:var(--orange);letter-spacing:-0.02em;}
+  .stats .l{font-size:9.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;}
+  .ctarow{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;text-decoration:none;padding:12px 20px;border-radius:11px;cursor:pointer;border:0;}
+  .btn.dark{background:var(--ink);color:#fff;}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-soft);}
+  .btn.orange{background:var(--orange);color:#fff;box-shadow:0 8px 20px -8px rgba(234,88,12,.6);}
+  .btn svg{width:16px;height:16px;}
+  .byline{margin-top:26px;font-size:13.5px;color:var(--muted);line-height:1.5;}
+  .byline b{color:var(--ink);font-weight:600;}
+
+  section.block{padding:40px 60px;border-top:1px solid var(--line);}
+  @media (max-width:640px){.cover{padding:40px 22px;}section.block{padding:32px 22px;}.cover h1{font-size:36px;}}
+  .seyebrow{color:var(--orange-dark);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:10px;}
+  .seyebrow .num{width:26px;height:26px;border-radius:8px;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;}
+  h2{font-size:30px;font-weight:800;letter-spacing:-0.028em;line-height:1.12;margin-bottom:14px;}
+  h3{font-size:17px;font-weight:700;margin:24px 0 9px;letter-spacing:-0.01em;}
+  h4{font-size:14px;font-weight:700;margin:0 0 6px;}
+  p{margin-bottom:14px;color:var(--ink-soft);font-size:16.5px;}
+  p strong{color:var(--ink);font-weight:600;}
+  ul,ol{margin:0 0 14px 22px;color:var(--ink-soft);font-size:16.5px;}
+  li{margin-bottom:8px;}
+  li::marker{color:var(--orange);font-weight:700;}
+  .lead{font-size:18.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:20px;}
+
+  /* capability grid */
+  .caps{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 6px;}
+  @media (max-width:640px){.caps{grid-template-columns:1fr;}}
+  .cap{border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow-soft);background:var(--bg);}
+  .cap .ic{width:34px;height:34px;border-radius:9px;background:var(--orange-light);color:var(--orange-dark);display:grid;place-items:center;margin-bottom:11px;}
+  .cap .ic svg{width:18px;height:18px;}
+  .cap h4{font-size:15px;margin-bottom:5px;}
+  .cap p{font-size:14px;margin-bottom:0;}
+
+  /* screenshot figure */
+  .shot{margin:22px 0 6px;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-card);background:#efeee9;}
+  .shot img{width:100%;display:block;}
+  figcaption{font-size:13px;color:var(--muted);text-align:center;padding:12px 16px;background:var(--bg);border-top:1px solid var(--line);}
+
+  /* steps */
+  .step{display:grid;grid-template-columns:42px 1fr;gap:14px;background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow-soft);}
+  .step .sn{width:36px;height:36px;border-radius:10px;background:var(--orange-light);color:var(--orange-dark);font-weight:800;font-size:15px;display:grid;place-items:center;}
+  .step h4{font-size:15px;margin-bottom:4px;}
+  .step p{font-size:14.5px;margin-bottom:6px;}
+  .step ol,.step ul{margin:6px 0 0 18px;font-size:14.5px;}
+  .step li{margin-bottom:5px;}
+  .step code{font-size:13px;}
+
+  /* code / prompt blocks */
+  .prompt{position:relative;background:linear-gradient(180deg,var(--code2),var(--code));color:#e7ecf3;border-radius:14px;padding:38px 18px 18px;margin:14px 0 18px;font-family:"JetBrains Mono",monospace;font-size:13.5px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow-card);}
+  .prompt .tagp{position:absolute;top:13px;left:18px;background:var(--orange);color:#fff;font-family:"Rubik",sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:7px;}
+  .prompt .c{color:#fb923c;}
+  .copy{position:absolute;top:11px;right:12px;background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:7px;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;font-family:"Rubik",sans-serif;}
+  .copy:hover{background:rgba(255,255,255,.2);}
+  code{font-family:"JetBrains Mono",monospace;font-size:13px;background:var(--bg-muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--orange-dark);}
+
+  /* callouts */
+  .box{border-radius:14px;padding:18px 20px;margin:18px 0;font-size:15.5px;background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--faint);box-shadow:var(--shadow-soft);}
+  .box .h{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+  .box p{font-size:15.5px;margin-bottom:10px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.tip{background:var(--mint-light);border-color:var(--mint-edge);border-left-color:var(--mint);}
+  .box.tip .h{color:var(--mint-dark);}
+  .box.warm{background:var(--orange-light);border-color:var(--orange-soft);border-left-color:var(--orange);}
+  .box.warm .h{color:var(--orange-dark);}
+  .box ul{margin:6px 0 0 18px;font-size:15.5px;}
+
+  /* flow row */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 6px;}
+  @media (max-width:760px){.flow{grid-template-columns:1fr 1fr;}}
+  .flow .f{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);box-shadow:var(--shadow-soft);}
+  .flow .f .t{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-dark);margin-bottom:6px;}
+  .flow .f p{font-size:13.5px;margin:0;}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px;box-shadow:var(--shadow-soft);border-radius:12px;overflow:hidden;}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);}
+  th{background:var(--bg-muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;}
+  td{color:var(--ink-soft);}
+  td code{font-size:12.5px;}
+
+  /* cta band + footer */
+  .ctaband{padding:46px 60px;background:linear-gradient(135deg,#1a1410,#241a12);color:#fff;text-align:center;}
+  .ctaband h2{color:#fff;font-size:28px;margin-bottom:10px;}
+  .ctaband p{color:#d8cfc4;max-width:520px;margin:0 auto 22px;font-size:16px;}
+  .ctaband .ctarow{justify-content:center;}
+  footer{padding:26px 60px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;border-top:1px solid var(--line);}
+  footer .sep{width:4px;height:4px;border-radius:50%;background:var(--faint);}
+  @media (max-width:640px){.ctaband,footer{padding-left:22px;padding-right:22px;}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="inner">
+    <div class="brand"><img src="assets/metadataone-icon.jpeg" alt=""><span>The Demand Gen Agent</span></div>
+    <div class="links">
+      <a href="#what">What it is</a>
+      <a href="#how">How it works</a>
+      <a href="#setup">Setup</a>
+      <a href="#talk">Talk to it</a>
+      <a href="/dashboard" class="cta">Open dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- COVER -->
+  <header class="cover">
+    <div class="brandrow">
+      <img src="assets/metadataone-icon.jpeg" alt="MetadataONE">
+      <div class="wm">Metadata<b>ONE</b></div>
+    </div>
+    <div class="eyebrow">The build · packaged</div>
+    <h1>Run paid by <span class="ac">messaging an agent.</span></h1>
+    <p class="sub">It runs on Claude, manages your ad spend across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, and lives in your Slack. You talk to it like a teammate. It watches the spend as it happens and flags it before it hurts. Wire it up once and you stop opening ad managers.</p>
+    <div class="stats">
+      <div class="s"><div class="n">5</div><div class="l">Channels, one MCP</div></div>
+      <div class="s"><div class="n">Slack</div><div class="l">Where you run it</div></div>
+      <div class="s"><div class="n">Intraday</div><div class="l">Not month-end</div></div>
+      <div class="s"><div class="n">0</div><div class="l">Ad managers open</div></div>
+    </div>
+    <div class="ctarow">
+      <a class="btn orange" id="repoCta" href="https://github.com/thoughtpilot99/demand-gen-agent">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.7 22c.5.1.7-.2.7-.5v-2c-2.9.6-3.5-1.2-3.5-1.2-.5-1.2-1.2-1.5-1.2-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.3-.3-4.7-1.1-4.7-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.7 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+        Get the repo
+      </a>
+      <a class="btn ghost" href="/dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16V9M13 16V6M18 16v-4"/></svg>
+        Open the live dashboard
+      </a>
+    </div>
+    <p class="byline">The whole build, free. Clone it, point it at your accounts, and message it in Slack. <b>This page is the guide.</b></p>
+  </header>
+
+  <!-- WHAT IT IS -->
+  <section class="block" id="what">
+    <div class="seyebrow"><span class="num">1</span> What you are standing up</div>
+    <h2>A teammate that runs paid, not another dashboard you have to check.</h2>
+    <p class="lead">Most paid teams find out a campaign went sideways days after the money was gone. This one watches the spend as it happens, acts inside your guardrails, and pings you when something needs your eyes. Four things it does:</p>
+
+    <div class="caps">
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.6 6.4L20 7l-4.2 5L20 17l-6.4-1.4L12 22l-1.6-6.4L4 17l4.2-5L4 7l6.4 1.6L12 2z"/></svg></div>
+        <h4>Runs on Claude</h4>
+        <p>Wired to your LinkedIn, Meta, Google, Reddit and X ad accounts through MetadataONE's MCP. One connection, all five channels.</p>
+      </div>
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div>
+        <h4>Manages spend day to day</h4>
+        <p>Rebids the auctions worth winning, pauses the losers, and moves budget toward whatever is returning pipeline.</p>
+      </div>
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 0 1-12 7.7L3 21l1.8-6A8.5 8.5 0 1 1 21 11.5z"/></svg></div>
+        <h4>Lives in your Slack</h4>
+        <p>You run paid by messaging it. The big moves come back as an Approve or Hold card you sign off on in a thread.</p>
+      </div>
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16V9M13 16V6M18 16v-4"/></svg></div>
+        <h4>Alerts and a live dashboard</h4>
+        <p>Pushes alerts and a weekly readout into Slack, with a live dashboard for spend, CPL, and pipeline by channel.</p>
+      </div>
+    </div>
+
+    <figure class="shot">
+      <img src="assets/agent-in-claude.png" alt="The demand gen agent in Claude, reading live numbers and showing the cross-channel dashboard">
+      <figcaption>Ask it how you are pacing. It reads the live numbers through MetadataONE and shows you the dashboard.</figcaption>
+    </figure>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="block" id="how">
+    <div class="seyebrow"><span class="num">2</span> How it works</div>
+    <h2>It reads through one MCP and acts through your guardrails.</h2>
+    <p>There is no magic here, and you can read every line of it. The agent reads your live numbers straight from MetadataONE. When it wants to change spend, it does not just do it. It runs the move through guardrails you set, and the big ones wait for you in Slack.</p>
+
+    <div class="flow">
+      <div class="f"><div class="t">Read</div><p>Pulls live spend, CPL and pipeline by channel from MetadataONE's MCP.</p></div>
+      <div class="f"><div class="t">Decide</div><p>Runs on Claude. Spots the channel bleeding money and the one returning pipeline.</p></div>
+      <div class="f"><div class="t">Act</div><p>Rebids and pauses on its own. Routes big budget moves to you first.</p></div>
+      <div class="f"><div class="t">Report</div><p>Posts what it did, and why, into Slack. Updates the dashboard.</p></div>
+    </div>
+
+    <div class="box tip">
+      <div class="h">The part that makes it safe</div>
+      <p>Reads run through Claude's MCP connector. Writes do not. Every change to spend goes through three guarded tools the agent has to call, where your auto-approve limit and the Slack sign-off are enforced in code. The agent proposes. Your rules decide.</p>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="block" id="setup">
+    <div class="seyebrow"><span class="num">3</span> Stand up your own</div>
+    <h2>Five minutes, mostly pasting keys.</h2>
+    <p class="lead">You need three things: a Claude API key, a MetadataONE access token, and a Slack app. Then it is one command.</p>
+
+    <div class="step"><div class="sn">1</div><div>
+      <h4>Clone it and install</h4>
+      <p>Grab the repo and pull the dependencies. Node 20 or newer.</p>
+      <div class="prompt"><span class="tagp">terminal</span><button class="copy">Copy</button>git clone https://github.com/thoughtpilot99/demand-gen-agent
+cd demand-gen-agent
+npm install
+cp .env.example .env</div>
+    </div></div>
+
+    <div class="step"><div class="sn">2</div><div>
+      <h4>Get your three keys</h4>
+      <ul>
+        <li><strong>Claude.</strong> An API key from <code>console.anthropic.com</code>. Paste it as <code>ANTHROPIC_API_KEY</code>.</li>
+        <li><strong>MetadataONE.</strong> Log into Metadata as an admin, open <strong>Settings</strong>, click <strong>Access Token</strong>, generate one for the MCP server, and paste it as <code>METADATAONE_TOKEN</code>.</li>
+        <li><strong>Slack.</strong> Create an app at <code>api.slack.com/apps</code> with Socket Mode on. Drop in the bot token, app token, and signing secret.</li>
+      </ul>
+    </div></div>
+
+    <div class="step"><div class="sn">3</div><div>
+      <h4>Point it at your tools</h4>
+      <p>MetadataONE exposes the write actions as MCP tools. Their names vary by tenant, so list yours and set them in <code>.env</code>.</p>
+      <div class="prompt"><span class="tagp">terminal</span><button class="copy">Copy</button>npm run probe</div>
+      <p>That prints every tool your tenant exposes. Match the pause, bid, budget and performance tools to <code>MCP_TOOL_PAUSE</code>, <code>MCP_TOOL_SET_BID</code>, <code>MCP_TOOL_MOVE_BUDGET</code> and <code>MCP_TOOL_GET_PERFORMANCE</code>.</p>
+    </div></div>
+
+    <div class="step"><div class="sn">4</div><div>
+      <h4>Set your guardrails</h4>
+      <p>This is the part you actually tune. Decide what the agent does on its own versus what waits for you.</p>
+      <div class="prompt"><span class="tagp">.env</span><button class="copy">Copy</button><span class="c"># Budget moves at or under this run on their own.</span>
+AUTO_APPROVE_DAILY_USD=2000
+<span class="c"># It will never propose a single move above this.</span>
+MAX_DAILY_SHIFT_USD=20000
+<span class="c"># When a channel crosses this CPL, the guard kicks in.</span>
+CPL_CEILING_USD=140</div>
+    </div></div>
+
+    <div class="step"><div class="sn">5</div><div>
+      <h4>Bring it online</h4>
+      <p>One command. It comes up in Slack and starts watching.</p>
+      <div class="prompt"><span class="tagp">terminal</span><button class="copy">Copy</button>npm run dev</div>
+      <p>Now go to your <code>#paid-media</code> channel and message it. Ask it how you are pacing. From here, you stop opening ad managers.</p>
+    </div></div>
+
+    <div class="box warm">
+      <div class="h">Optional, but nice</div>
+      <p>The live dashboard ships in the same repo under <code>site/</code>. Deploy it to Vercel in one push and you have a shareable link for spend, CPL and pipeline by channel, separate from the chat.</p>
+    </div>
+  </section>
+
+  <!-- DAY TO DAY -->
+  <section class="block" id="day">
+    <div class="seyebrow"><span class="num">4</span> What a day looks like</div>
+    <h2>It catches the spike intraday, not at month-end.</h2>
+    <p>Meta CPL starts climbing at 11am because a creative fatigued. The agent sees it the moment it crosses your ceiling. It pauses the two weak ad sets, rebids your top Google auctions to hold the blended number, and shifts that spend toward LinkedIn where pipeline per dollar is highest. The small moves it just makes. The bigger budget reallocation it sends to you.</p>
+
+    <figure class="shot">
+      <img src="assets/agent-in-slack.png" alt="The demand gen agent in Slack: an intraday alert, plus a budget move with Approve and Hold buttons in the thread">
+      <figcaption>The big move lands in Slack as an Approve or Hold card. You sign off in the thread. It executes on the click.</figcaption>
+    </figure>
+
+    <div class="box">
+      <div class="h">The guardrails, in one line each</div>
+      <ul>
+        <li><strong>Rebids and pauses</strong> are day-to-day work. They run automatically and the agent tells you what it did.</li>
+        <li><strong>Budget moves at or under your limit</strong> run automatically too.</li>
+        <li><strong>Budget moves above your limit</strong> post to Slack and wait for a human to approve in the thread.</li>
+        <li><strong>Nothing</strong> above the hard ceiling. Ever. The agent breaks it into steps instead.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- TALK TO IT -->
+  <section class="block" id="talk">
+    <div class="seyebrow"><span class="num">5</span> Talk to it like a teammate</div>
+    <h2>Plain English. No syntax to learn.</h2>
+    <p>You do not configure it with a form. You tell it what you want the way you would tell a colleague who runs paid. A few that work on day one:</p>
+
+    <div class="prompt"><span class="tagp">slack</span><button class="copy">Copy</button>how are we pacing today? anything I should look at?</div>
+    <div class="prompt"><span class="tagp">slack</span><button class="copy">Copy</button>shift $3k/day from Meta to LinkedIn if LinkedIn is still returning better pipeline</div>
+    <div class="prompt"><span class="tagp">slack</span><button class="copy">Copy</button>what's my worst CPL channel right now, and what would you do about it?</div>
+    <div class="prompt"><span class="tagp">slack</span><button class="copy">Copy</button>pause anything over $150 CPL and tell me what you pulled</div>
+
+    <p>It reads your live numbers before it answers, so it is talking about your accounts, not guessing. When a move is bigger than your limit, it tells you it has sent it to Slack for sign-off. It does not pretend it is already done.</p>
+  </section>
+
+  <!-- MAKE IT YOURS -->
+  <section class="block" id="config">
+    <div class="seyebrow"><span class="num">6</span> Make it yours</div>
+    <h2>Every knob is a line you can read.</h2>
+    <p>The whole thing is a few hundred lines of TypeScript. Nothing is hidden. The pieces you are most likely to touch:</p>
+    <table>
+      <thead><tr><th>You want to</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Change the auto-approve limit or CPL ceiling</td><td><code>.env</code> guardrails block</td></tr>
+        <tr><td>Change how often it checks pacing, or the readout day</td><td><code>PACING_CRON</code>, <code>WEEKLY_CRON</code></td></tr>
+        <tr><td>Adjust the teammate voice or the operating rules</td><td><code>src/prompts.ts</code></td></tr>
+        <tr><td>Add a write action or change the gate logic</td><td><code>src/agent.ts</code>, <code>src/guardrails.ts</code></td></tr>
+        <tr><td>Map MetadataONE tool names for your tenant</td><td><code>npm run probe</code> then <code>.env</code></td></tr>
+      </tbody>
+    </table>
+    <div class="box tip">
+      <div class="h">Before you run it on real spend</div>
+      <p>The approval queue is in memory so the giveaway stays a single file to run. Back it with Redis or a table before production so a restart never drops a pending move. It is one swap, called out in the code.</p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="ctaband">
+    <h2>Wire it up once. Stop opening ad managers.</h2>
+    <p>The whole build is yours. Clone it, point it at your accounts, and run paid from Slack.</p>
+    <div class="ctarow">
+      <a class="btn orange" href="https://github.com/thoughtpilot99/demand-gen-agent">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5A10.5 10.5 0 0 0 8.7 22c.5.1.7-.2.7-.5v-2c-2.9.6-3.5-1.2-3.5-1.2-.5-1.2-1.2-1.5-1.2-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.3-.3-4.7-1.1-4.7-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.7 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.5 10.5 0 0 0 12 1.5Z"/></svg>
+        Get the repo
+      </a>
+      <a class="btn ghost" href="/dashboard">Open the live dashboard</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Built and shared by MetadataONE</span>
+    <span class="sep"></span>
+    <a href="/dashboard">Live dashboard</a>
+    <span class="sep"></span>
+    <span>Runs on Claude · wired through MetadataONE's MCP</span>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var block = btn.closest('.prompt');
+      var text = block.cloneNode(true);
+      text.querySelectorAll('.tagp,.copy').forEach(function(n){ n.remove(); });
+      navigator.clipboard.writeText(text.textContent.trim()).then(function(){
+        var old = btn.textContent; btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = old; }, 1400);
+      });
+    });
+  });
+</script>
+</body>
+</html>
