@@ -28,6 +28,15 @@ function num(name: string, fallback: number): number {
 export const CHANNELS = ["linkedin", "meta", "google", "reddit", "x"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
+/** Display names for the channels (for Slack cards and summaries). */
+export const CHANNEL_LABEL: Record<Channel, string> = {
+  linkedin: "LinkedIn",
+  meta: "Meta",
+  google: "Google",
+  reddit: "Reddit",
+  x: "X",
+};
+
 export const config = {
   anthropic: {
     apiKey: req("ANTHROPIC_API_KEY"),
@@ -57,6 +66,9 @@ export const config = {
     signingSecret: req("SLACK_SIGNING_SECRET"),
     channel: opt("SLACK_CHANNEL", "#paid-media"),
   },
+
+  /** Public dashboard link the agent drops into Slack ("Full picture: …"). */
+  dashboardUrl: opt("DASHBOARD_URL", ""),
 
   guardrails: {
     /** Budget moves at or under this daily $ amount execute automatically. */

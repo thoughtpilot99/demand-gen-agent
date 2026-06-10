@@ -1,6 +1,6 @@
 import bolt from "@slack/bolt";
 import type Anthropic from "@anthropic-ai/sdk";
-import { config } from "./config.js";
+import { config, CHANNEL_LABEL, type Channel } from "./config.js";
 import { runAgent } from "./agent.js";
 import { resolve, type ProposedChange } from "./guardrails.js";
 
@@ -10,6 +10,9 @@ const { App } = bolt;
  * Slack is where you run paid. You message the agent like a teammate, it replies
  * in the thread, and the big moves land here as Approve / Hold cards you sign off
  * on. Alerts and the weekly readout post here too.
+ *
+ * The cards use the legacy `attachments` color bar (the only way to get the
+ * left border) plus Block Kit blocks for the content and the buttons.
  */
 export const app = new App({
   token: config.slack.botToken,
@@ -17,6 +20,12 @@ export const app = new App({
   signingSecret: config.slack.signingSecret,
   socketMode: true,
 });
+
+// Brand colors for the card bars.
+const CLAY = "#ea580c";
+const RED = "#e01e5a";
+const GREEN = "#2eb67d";
+const SLATE = "#94a3b8";
 
 // Lightweight per-thread memory so a back-and-forth keeps context.
 const threadMemory = new Map<string, Anthropic.Beta.Messages.BetaMessageParam[]>();
@@ -54,7 +63,21 @@ app.message(async ({ message, say }) => {
   await handle(String(m.text ?? ""), m.channel, m.thread_ts ?? m.ts, say);
 });
 
-// ── Approval card + buttons ──────────────────────────────────────────────────
+function dashFooter(): string {
+  return config.dashboardUrl ? `   :bar_chart: Full picture: ${config.dashboardUrl}` : "";
+}
+
+function approveButtons(id: string) {
+  return {
+    type: "actions",
+    elements: [
+      { type: "button", text: { type: "plain_text", text: "Approve & shift", emoji: true }, style: "primary", action_id: "approve_change", value: id },
+      { type: "button", text: { type: "plain_text", text: "Hold", emoji: true }, action_id: "hold_change", value: id },
+    ],
+  };
+}
+
+// ── Approval card ────────────────────────────────────────────────────────────
 
 export async function postApproval(
   change: ProposedChange,
@@ -62,34 +85,24 @@ export async function postApproval(
   channel: string = config.slack.channel,
   threadTs?: string,
 ) {
+  const auto = config.guardrails.autoApproveDailyUsd.toLocaleString("en-US");
   await app.client.chat.postMessage({
     channel,
     ...(threadTs ? { thread_ts: threadTs } : {}),
     text: `One move needs your sign-off: ${change.summary}`,
     blocks: [
+      { type: "section", text: { type: "mrkdwn", text: "One bigger move needs your sign-off before I make it:" } },
+    ],
+    attachments: [
       {
-        type: "section",
-        text: { type: "mrkdwn", text: `*One move needs your sign-off*\n${change.summary}` },
-      },
-      {
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve & shift", emoji: true },
-            style: "primary",
-            action_id: "approve_change",
-            value: id,
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Hold", emoji: true },
-            action_id: "hold_change",
-            value: id,
-          },
+        color: CLAY,
+        blocks: [
+          { type: "section", text: { type: "mrkdwn", text: `*${change.summary}*${change.detail ? `\n${change.detail}` : ""}` } },
+          { type: "context", elements: [{ type: "mrkdwn", text: `:lock: *Needs approval*   Above your $${auto}/day auto-approve limit` }] },
+          approveButtons(id),
         ],
       },
-    ],
+    ] as any,
   });
 }
 
@@ -99,11 +112,16 @@ app.action("approve_change", async ({ ack, body, respond }) => {
   const who = (body as any).user?.id ? `<@${(body as any).user.id}>` : "someone";
   try {
     const change = await resolve(id, "approve");
+    if (!change) {
+      await respond({ replace_original: true, text: "That move already expired or was handled." });
+      return;
+    }
     await respond({
       replace_original: true,
-      text: change
-        ? `:white_check_mark: Approved by ${who}. ${change.summary} Done.`
-        : "That move already expired or was handled.",
+      text: `Approved. ${change.summary}. Done.`,
+      attachments: [
+        { color: GREEN, blocks: [{ type: "section", text: { type: "mrkdwn", text: `:white_check_mark: *Approved by ${who}.* ${change.summary}. Done.${dashFooter()}` } }] },
+      ] as any,
     });
   } catch (err) {
     console.error("approve failed:", err);
@@ -117,11 +135,47 @@ app.action("hold_change", async ({ ack, body, respond }) => {
   const change = await resolve(id, "hold");
   await respond({
     replace_original: true,
-    text: change ? `:no_entry_sign: Held. Nothing moved. (${change.summary})` : "That move already expired.",
+    text: change ? `Held. Nothing moved.` : "That move already expired.",
+    attachments: change
+      ? ([{ color: SLATE, blocks: [{ type: "section", text: { type: "mrkdwn", text: `:no_entry_sign: *Held.* Nothing moved. (${change.summary})` } }] }] as any)
+      : undefined,
   });
 });
 
-// ── Outbound helpers used by the scheduled jobs ──────────────────────────────
+// ── Alert card (intraday pacing watch) ───────────────────────────────────────
+
+export async function postAlert(opts: { breaches: { channel: Channel; cpl: number }[]; ceiling: number; reply: string }) {
+  const fields = opts.breaches.map((b) => ({
+    type: "mrkdwn",
+    text: `*${CHANNEL_LABEL[b.channel]} CPL*\n$${Math.round(b.cpl).toLocaleString("en-US")} ▲`,
+  }));
+  fields.push({ type: "mrkdwn", text: `*Your ceiling*\n$${opts.ceiling.toLocaleString("en-US")}` });
+
+  const first = opts.breaches[0];
+  const title =
+    opts.breaches.length === 1 && first
+      ? `${CHANNEL_LABEL[first.channel]} CPL crossed your ceiling`
+      : `${opts.breaches.length} channels crossed your CPL ceiling`;
+
+  await app.client.chat.postMessage({
+    channel: config.slack.channel,
+    text: "Heads up, a channel crossed your CPL ceiling.",
+    blocks: [
+      { type: "section", text: { type: "mrkdwn", text: "Heads up. I caught this as it happened, not at month-end. :point_down:" } },
+    ],
+    attachments: [
+      {
+        color: RED,
+        blocks: [
+          { type: "section", text: { type: "mrkdwn", text: `:red_circle: *${title}*\n${opts.reply}` } },
+          { type: "section", fields },
+        ],
+      },
+    ] as any,
+  });
+}
+
+// ── Plain channel post (weekly readout) ──────────────────────────────────────
 
 export async function postToChannel(text: string, blocks?: unknown[]) {
   await app.client.chat.postMessage({

@@ -232,6 +232,7 @@ SLACK_BOT_TOKEN=${v("g_slackBot", "xoxb-...")}
 SLACK_APP_TOKEN=${v("g_slackApp", "xapp-...")}
 SLACK_SIGNING_SECRET=${v("g_slackSecret", "")}
 SLACK_CHANNEL=${v("g_channel", "#paid-media")}
+DASHBOARD_URL=${v("g_dashboard", "")}
 
 AUTO_APPROVE_DAILY_USD=${v("g_autoApprove", "2000")}
 MAX_DAILY_SHIFT_USD=20000
@@ -243,7 +244,7 @@ TIMEZONE=America/New_York`;
   const o = $("envOut"); if (o) o.textContent = out;
 }
 function initEnv() {
-  ["g_anthropic", "g_metaToken", "g_slackBot", "g_slackApp", "g_slackSecret", "g_channel", "g_autoApprove", "g_cpl"]
+  ["g_anthropic", "g_metaToken", "g_slackBot", "g_slackApp", "g_slackSecret", "g_channel", "g_dashboard", "g_autoApprove", "g_cpl"]
     .forEach((id) => $(id)?.addEventListener("input", buildEnv));
   $("envCopy")?.addEventListener("click", () => copyText($("envOut").textContent, $("envCopy")));
   buildEnv();

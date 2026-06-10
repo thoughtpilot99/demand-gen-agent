@@ -1,7 +1,7 @@
 import { config } from "../config.js";
 import { getPerformance } from "../metadata.js";
 import { runAgent } from "../agent.js";
-import { postToChannel, postApproval } from "../slack.js";
+import { postAlert, postApproval } from "../slack.js";
 
 /**
  * The intraday watch. This is the part of the post that matters most: most teams
@@ -31,5 +31,9 @@ export async function runPacingWatch(): Promise<void> {
     },
   });
 
-  await postToChannel(`:rotating_light: *Caught this intraday, not at month-end.*\n${reply}`);
+  await postAlert({
+    breaches: breaches.map((b) => ({ channel: b.channel, cpl: b.cpl })),
+    ceiling: config.guardrails.cplCeilingUsd,
+    reply,
+  });
 }

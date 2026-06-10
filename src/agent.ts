@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { config, type Channel } from "./config.js";
+import { config, CHANNEL_LABEL, type Channel } from "./config.js";
 import { systemPrompt } from "./prompts.js";
 import { evaluate, enqueue, type ProposedChange } from "./guardrails.js";
 import { pauseCampaign, rebidCampaign, moveBudget } from "./metadata.js";
@@ -136,7 +136,7 @@ async function execTool(name: string, input: any, onApproval?: ApprovalNotifier)
       {
         kind: "pause",
         dailyUsd: 0,
-        summary: `Paused ${ids.length} ${channel} ad set${ids.length === 1 ? "" : "s"}. ${reason}`,
+        summary: `Paused ${ids.length} ${CHANNEL_LABEL[channel]} ad set${ids.length === 1 ? "" : "s"}. ${reason}`,
         execute: async () => {
           for (const id of ids) await pauseCampaign(channel, id, reason);
         },
@@ -154,7 +154,7 @@ async function execTool(name: string, input: any, onApproval?: ApprovalNotifier)
       {
         kind: "rebid",
         dailyUsd: 0,
-        summary: `Rebid ${channel} campaign ${campaignId} to ${bid}. ${reason}`,
+        summary: `Rebid ${CHANNEL_LABEL[channel]} campaign ${campaignId} to ${bid}. ${reason}`,
         execute: async () => {
           await rebidCampaign(channel, campaignId, bid, reason);
         },
@@ -172,7 +172,8 @@ async function execTool(name: string, input: any, onApproval?: ApprovalNotifier)
       {
         kind: "move_budget",
         dailyUsd: daily,
-        summary: `Move $${Math.round(daily).toLocaleString("en-US")}/day from ${from} to ${to}. ${reason}`,
+        summary: `Shift $${Math.round(daily).toLocaleString("en-US")}/day · ${CHANNEL_LABEL[from]} → ${CHANNEL_LABEL[to]}`,
+        detail: reason,
         execute: async () => {
           await moveBudget(from, to, daily, reason);
         },

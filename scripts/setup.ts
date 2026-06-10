@@ -34,6 +34,7 @@ const FIELDS: Field[] = [
   { key: "SLACK_APP_TOKEN", label: "Slack app token (xapp-)", secret: true },
   { key: "SLACK_SIGNING_SECRET", label: "Slack signing secret", secret: true },
   { key: "SLACK_CHANNEL", label: "Slack channel", def: "#paid-media" },
+  { key: "DASHBOARD_URL", label: "Dashboard URL (optional)", def: "" },
   { key: "AUTO_APPROVE_DAILY_USD", label: "Auto-approve limit ($/day)", def: "2000" },
   { key: "CPL_CEILING_USD", label: "CPL ceiling ($)", def: "140" },
 ];
@@ -86,7 +87,7 @@ async function main() {
   // write .env preserving a readable order
   const order = ["ANTHROPIC_API_KEY", "AGENT_MODEL", "AGENT_EFFORT", "METADATAONE_MCP_URL", "METADATAONE_TOKEN",
     "MCP_TOOL_PERFORMANCE", "MCP_TOOL_MANAGE_CAMPAIGN", "MCP_TOOL_UPDATE_BUDGETS",
-    "SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_SIGNING_SECRET", "SLACK_CHANNEL",
+    "SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_SIGNING_SECRET", "SLACK_CHANNEL", "DASHBOARD_URL",
     "AUTO_APPROVE_DAILY_USD", "MAX_DAILY_SHIFT_USD", "CPL_CEILING_USD",
     "PACING_CRON", "WEEKLY_CRON", "TIMEZONE"];
   const body = order.map((k) => `${k}=${values[k] ?? ""}`).join("\n") + "\n";

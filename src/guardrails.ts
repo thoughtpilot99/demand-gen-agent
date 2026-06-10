@@ -14,8 +14,10 @@ export type ChangeKind = "pause" | "rebid" | "move_budget";
 
 export interface ProposedChange {
   kind: ChangeKind;
-  /** One-line, human-readable summary for Slack and the agent's reply. */
+  /** Headline for the Slack card and the agent's reply (e.g. "Shift $4.2K/day · Meta → LinkedIn"). */
   summary: string;
+  /** Optional rationale shown under the headline on the approval card. */
+  detail?: string;
   /** Daily dollars at stake (budget moves). 0 for pause/rebid. */
   dailyUsd: number;
   /** Performs the actual MetadataONE write. Called on auto-approve or on click. */
