@@ -36,10 +36,10 @@ Two ways to run it, both one command. Either way you need three keys: a Claude A
 git clone https://github.com/thoughtpilot99/demand-gen-agent
 cd demand-gen-agent
 
-# Option A — npm (Node 20+): interactive setup scaffolds .env and validates every key
+# Option A: npm (Node 20+). Interactive setup scaffolds .env and validates every key
 npm install && npm run setup && npm run dev
 
-# Option B — Docker (no local Node): fill .env, then up
+# Option B: Docker (no local Node). Fill .env, then up
 cp .env.example .env && docker compose up
 ```
 

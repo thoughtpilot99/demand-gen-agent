@@ -12,5 +12,5 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY scripts ./scripts
 
-# Runs `tsx src/index.ts` — boots Slack + the scheduled jobs.
+# Runs `tsx src/index.ts` to boot Slack + the scheduled jobs.
 CMD ["npm", "start"]

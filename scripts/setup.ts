@@ -67,7 +67,7 @@ function mask(v: string): string {
 }
 
 async function main() {
-  console.log(`\n${c.orange}${c.bold}Demand Gen Agent — setup${c.reset}\n${c.dim}Fill what you have. Press Enter to keep an existing value.${c.reset}\n`);
+  console.log(`\n${c.orange}${c.bold}Demand Gen Agent · setup${c.reset}\n${c.dim}Fill what you have. Press Enter to keep an existing value.${c.reset}\n`);
 
   const envPath = new URL("../.env", import.meta.url).pathname;
   const current = parseEnv(envPath);
@@ -99,10 +99,10 @@ async function main() {
   try {
     const anthropic = new Anthropic({ apiKey: values.ANTHROPIC_API_KEY });
     await anthropic.models.retrieve(values.AGENT_MODEL || "claude-opus-4-8");
-    console.log(ok(`Claude — key works, ${values.AGENT_MODEL} reachable`));
+    console.log(ok(`Claude:key works, ${values.AGENT_MODEL} reachable`));
   } catch (e: any) {
     allGood = false;
-    console.log(bad(`Claude — ${e?.message || e}`));
+    console.log(bad(`Claude:${e?.message || e}`));
   }
 
   // 2. MetadataONE MCP
@@ -115,13 +115,13 @@ async function main() {
     const { tools } = await client.listTools();
     await client.close();
     const have = tools.map((t) => t.name);
-    console.log(ok(`MetadataONE — connected, ${c.bold}${have.length}${c.reset} tools available`));
+    console.log(ok(`MetadataONE:connected, ${c.bold}${have.length}${c.reset} tools available`));
     for (const [label, name] of [["pause/rebid", values.MCP_TOOL_MANAGE_CAMPAIGN], ["budget", values.MCP_TOOL_UPDATE_BUDGETS], ["read", values.MCP_TOOL_PERFORMANCE]] as const) {
-      console.log(have.includes(name) ? `   ${ok(`${name} (${label})`)}` : `   ${warn(`${name} (${label}) not found — set MCP_TOOL_* in .env to a real name from the list`)}`);
+      console.log(have.includes(name) ? `   ${ok(`${name} (${label})`)}` : `   ${warn(`${name} (${label}) not found. Set MCP_TOOL_* in .env to a real name from the list`)}`);
     }
   } catch (e: any) {
     allGood = false;
-    console.log(bad(`MetadataONE — ${e?.message || e}`));
+    console.log(bad(`MetadataONE:${e?.message || e}`));
   }
 
   // 3. Slack
@@ -131,11 +131,11 @@ async function main() {
       headers: { Authorization: `Bearer ${values.SLACK_BOT_TOKEN}` },
     });
     const data: any = await res.json();
-    if (data.ok) console.log(ok(`Slack — authed as ${c.bold}${data.user}${c.reset} in ${data.team}`));
-    else { allGood = false; console.log(bad(`Slack — ${data.error}`)); }
+    if (data.ok) console.log(ok(`Slack:authed as ${c.bold}${data.user}${c.reset} in ${data.team}`));
+    else { allGood = false; console.log(bad(`Slack:${data.error}`)); }
   } catch (e: any) {
     allGood = false;
-    console.log(bad(`Slack — ${e?.message || e}`));
+    console.log(bad(`Slack:${e?.message || e}`));
   }
 
   console.log(
