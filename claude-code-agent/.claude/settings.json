@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__metadataone__*",
+      "mcp__slack__*",
+      "Read",
+      "Write",
+      "Bash"
+    ]
+  }
+}

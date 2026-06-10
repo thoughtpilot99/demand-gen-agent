@@ -236,7 +236,7 @@
     </div>
     <div class="eyebrow">The interactive build</div>
     <h1>Wire Claude to your paid stack. <span class="ac">Run it from Slack.</span></h1>
-    <p class="sub">A demand gen agent that runs on Claude, manages your ad spend across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, and lives in your Slack. This page is the operator's manual: the official connection, a live <b>.env</b> generator, the real 70-tool browser, a prompt library, and a repo you drop in and it builds itself.</p>
+    <p class="sub">A demand gen agent that runs on Claude, manages your ad spend across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, and talks to your team in Slack. Run it on your <b>Claude subscription with no API key</b>, or as the full API bot. This page is the operator's manual: the official connection, the no-API setup, the real 70-tool browser, and a prompt library.</p>
     <div class="stats">
       <div class="s"><div class="n">70</div><div class="l">MCP tools</div></div>
       <div class="s"><div class="n">14</div><div class="l">Tool categories</div></div>
@@ -299,10 +299,59 @@
     <div class="box"><div class="h">Troubleshooting</div><p>If the connection fails, common culprits are browser cache or cookies, an authentication issue with the Metadata account, or permission settings. Contact <code>support@metadata.io</code> if you are still stuck.</p></div>
   </section>
 
+  <!-- RUN IT: THREE WAYS -->
+  <section class="block" id="run">
+    <div class="seyebrow green"><span class="num">4</span> Run it</div>
+    <h2>Three ways, all on Claude, all through MetadataONE.</h2>
+    <p class="lead">The ad work always runs through MetadataONE's MCP. The only difference is how Claude itself runs. Most people want the first one.</p>
+    <div class="caps">
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.6 6.4L20 7l-4.2 5L20 17l-6.4-1.4L12 22l-1.6-6.4L4 17l4.2-5L4 7l6.4 1.6L12 2z"/></svg></div>
+        <h4>1. Your Claude, no API</h4>
+        <p>Claude Pro. Connect MetadataONE (above), turn on Metadata's Slack alerts, paste in the agent Project. Run paid by chat. Nothing to deploy.</p>
+      </div>
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h4>2. Autonomous, still no API</h4>
+        <p>Claude Max. The <code>claude-code-agent</code> runs on Claude Code: scheduled pacing watch, weekly readout, and it takes orders you post in Slack. No key, no tokens.</p>
+      </div>
+      <div class="cap">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+        <h4>3. API bot, pay tokens</h4>
+        <p>The Node build below. Instant clickable Approve and Hold buttons in Slack via Socket Mode. Uses the Anthropic API for the reasoning.</p>
+      </div>
+    </div>
+
+    <h3>The no-API path, step by step</h3>
+    <div class="step"><div class="sn">A</div><div>
+      <h4>You already connected the brain</h4>
+      <p>Section 3 wired MetadataONE to your Claude. That alone lets you run paid by chat. The next two steps add the autonomous Slack alerts and the agent persona.</p>
+    </div></div>
+    <div class="step"><div class="sn">B</div><div>
+      <h4>Turn on Slack alerts, in Metadata</h4>
+      <p>This is Metadata's own integration, not Claude. In Metadata open <strong>Settings, Integrations, Slack</strong>, click <strong>Connect</strong>, pick your channel, and configure your Slack Alerts. Metadata pushes notifications to Slack on its own, around the clock, with no code.</p>
+    </div></div>
+    <div class="step"><div class="sn">C</div><div>
+      <h4>Paste the agent into a Claude Project</h4>
+      <p>Create a Project in Claude, connect the MetadataONE connector to it, and paste these as the Project instructions. Now that Project is your demand gen agent.</p>
+    </div></div>
+    <div class="prompt"><span class="tagp">claude project · instructions</span><button class="copy">Copy</button>You are my demand gen agent. You run my paid media across LinkedIn, Meta, Google, Reddit and X through MetadataONE's MCP, which is connected to this project.
+
+Always use read-only tools first to validate the data before any change. Look before you touch spend.
+
+Day to day: rebid the auctions worth winning, pause the losers, move budget toward whatever is returning pipeline. Report what you did with the number behind it.
+
+Guardrails: budget moves at or under $2,000/day you can make on your own. Anything larger, or launching a new campaign, ask me first and wait for my yes. Treat $140 as the CPL ceiling; when a channel crosses it, pause the weak ad sets and protect the blended number. Edit these numbers to your limits.
+
+Talk like a teammate. Plain and direct, lead with what matters, no fluff. When I ask how we are pacing, pull the live numbers and tell me straight, by channel.</div>
+
+    <div class="box tip"><div class="h">Want it to watch and ping you on its own?</div><p>The native Slack alerts cover that for what Metadata tracks. For the full "Claude caught the CPL spike intraday and posted what it did" experience on your subscription, use the <a href="https://github.com/thoughtpilot99/demand-gen-agent/tree/main/claude-code-agent"><code>claude-code-agent</code></a> (Claude Code on Max, no API). For instant clickable buttons, use the API build below.</p></div>
+  </section>
+
   <!-- SET UP THE AGENT -->
   <section class="block" id="setup">
-    <div class="seyebrow green"><span class="num">4</span> Stand up the agent</div>
-    <h2>Drop the repo in. It builds itself.</h2>
+    <div class="seyebrow"><span class="num">5</span> The API build (pay tokens)</div>
+    <h2>Or run the full bot. Drop the repo in.</h2>
     <p class="lead">Two ways to run it. Docker if you want zero local Node, or npm if you have Node 20+. Either way, one command builds and validates everything.</p>
     <div class="prompt"><span class="tagp">option a · docker</span><button class="copy">Copy</button>git clone https://github.com/thoughtpilot99/demand-gen-agent
 cd demand-gen-agent
@@ -388,7 +437,7 @@ npm run dev</div>
 
   <!-- HOW SLACK WORKS -->
   <section class="block" id="slack">
-    <div class="seyebrow"><span class="num">5</span> How the Slack side works</div>
+    <div class="seyebrow"><span class="num">6</span> How the Slack side works (API build)</div>
     <h2>A Socket Mode app you add to a channel. You message it.</h2>
     <p class="lead">No public server, no webhooks to host. The agent connects out to Slack over Socket Mode, so it runs from your laptop, a container, or a small box anywhere.</p>
     <div class="slackflow">
@@ -402,7 +451,7 @@ npm run dev</div>
 
   <!-- 70 TOOL BROWSER -->
   <section class="block" id="tools">
-    <div class="seyebrow"><span class="num">6</span> The capability surface</div>
+    <div class="seyebrow"><span class="num">7</span> The capability surface</div>
     <h2>Every MCP tool, searchable.</h2>
     <p>All 70 tools MetadataONE exposes, across 14 categories. <span class="tag read" style="position:static;padding:2px 7px;font-size:9.5px;border-radius:999px;">read</span> tools are safe to run any time. <span class="tag write" style="position:static;padding:2px 7px;font-size:9.5px;border-radius:999px;">write</span> tools change spend or state, which is why the agent gates the three it drives. Search a name or filter by category.</p>
     <p class="src">Source: <code>help.metadata.io/portal/articles/metadata-mcp-supported-tools</code></p>
@@ -416,7 +465,7 @@ npm run dev</div>
 
   <!-- PROMPT LIBRARY -->
   <section class="block" id="prompts">
-    <div class="seyebrow"><span class="num">7</span> The prompt library</div>
+    <div class="seyebrow"><span class="num">8</span> The prompt library</div>
     <h2>What to actually say to it.</h2>
     <p>Metadata's official prompts, plus a few examples grounded in the real tools. Each one shows what it triggers. Filter by the job you are doing.</p>
     <p class="src">Official prompts from Metadata's MCP guide (<code>metadataone.com</code>). The three tagged "agent example" reflect this agent's gated Slack flow.</p>
@@ -427,7 +476,7 @@ npm run dev</div>
 
   <!-- MAKE IT YOURS -->
   <section class="block" id="config">
-    <div class="seyebrow"><span class="num">8</span> Make it yours</div>
+    <div class="seyebrow"><span class="num">9</span> Make it yours</div>
     <h2>Every knob is a line you can read.</h2>
     <table>
       <thead><tr><th>You want to</th><th>Where</th></tr></thead>

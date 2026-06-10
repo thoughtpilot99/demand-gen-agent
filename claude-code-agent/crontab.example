@@ -1,0 +1,13 @@
+# Demand Gen Agent (Claude Code) schedule. Edit `crontab -e` and paste these.
+# Point AGENT at this folder. Times are local; adjust the hours to your day.
+
+AGENT=/path/to/demand-gen-agent/claude-code-agent
+
+# Check Slack for new instructions every 2 minutes, business hours, weekdays
+*/2 7-19 * * 1-5  cd $AGENT && ./run.sh inbox >> state/agent.log 2>&1
+
+# Intraday pacing watch every 15 minutes, business hours, weekdays
+*/15 7-19 * * 1-5  cd $AGENT && ./run.sh pacing-watch >> state/agent.log 2>&1
+
+# Weekly readout, Monday 9am
+0 9 * * 1  cd $AGENT && ./run.sh weekly-readout >> state/agent.log 2>&1
