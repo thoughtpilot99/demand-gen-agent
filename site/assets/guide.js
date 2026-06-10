@@ -103,17 +103,29 @@ const TOOLS = [
 // Prompts. "official" = quoted verbatim from Metadata. "example" = grounded in real
 // tools, written for this agent. Each tags the tools/agents it triggers.
 const PROMPTS = [
-  { job:"connect", official:true, text:"Which account am I currently connected with?", triggers:"Account insights · confirms the connection" },
+  // Connect & verify — official
+  { job:"connect", official:true, text:"Which account am I currently connected with?", triggers:"Confirms the connection, returns your account" },
   { job:"connect", official:true, text:"Which tools do I have available?", triggers:"Lists every tool your tenant exposes" },
   { job:"connect", official:true, text:"What are some questions I can ask?", triggers:"Metadata's own suggested starting points" },
-  { job:"plan", official:true, text:"You are the CMO of ServiceNow. Generate assets in parallel: 5 audiences, 5 brand ad creatives, 5 landing page offers. Setup the entire campaign in draft to spend $1M this quarter. DON'T LAUNCH.", triggers:"create_firmographic_audience · generate_brand_creative · create_update_offer · create_campaign (draft)" },
-  { job:"read", official:false, text:"How are we pacing today across all six channels? Pull performance and show me spend, CPL, and pipeline by channel.", triggers:"performance_metrics · account_level_stats" },
-  { job:"read", official:false, text:"Why is Meta CPL up week over week? Check the experiments and tell me which campaigns are dragging.", triggers:"experiment_performance_stats · search_experiments" },
-  { job:"read", official:false, text:"Show me the account funnel report and where pipeline is leaking.", triggers:"account_funnel_reports · deep_funnel_stats" },
-  { job:"act", official:false, text:"Pause every campaign over $150 CPL and tell me what you pulled.", triggers:"performance_metrics → manage_campaign (gated)" },
-  { job:"act", official:false, text:"Move $3k/day from the worst pipeline-per-dollar channel to the best.", triggers:"budget_group_performance → update_experiments_daily_budgets (gated)" },
-  { job:"build", official:false, text:"Build a Bombora intent audience of accounts surging on agentic GTM and show me the size.", triggers:"get_intent_topics · create_bombora_audience" },
-  { job:"build", official:false, text:"Generate 3 on-brand LinkedIn variants for the AI Buyers segment from my brand kit.", triggers:"get_brand_kit · generate_brand_creative" },
+  // Plan a campaign — official
+  { job:"plan", official:true, text:"You are the CMO of ServiceNow. Generate assets in parallel: 5 audiences, 5 brand ad creatives, 5 landing page offers. Setup the entire campaign in draft to spend $1M this quarter. DON'T LAUNCH.", triggers:"create_firmographic_audience · generate_brand_creative · create_update_offer · create_campaign" },
+  { job:"plan", official:true, text:"Spin up a multi-channel campaign across LinkedIn and Meta for the Q2 Security Webinar offer. Daily budget $500, audience the SIEM Bombora intent group I built yesterday.", triggers:"create_campaign · add_elements_to_campaign" },
+  { job:"plan", official:true, text:"Launch the Q2 Security Webinar campaign. Cap is $30K for the month.", triggers:"launch_campaign" },
+  // Read & diagnose — official
+  { job:"read", official:true, text:"Show me granular performance for every ad in the Q2 webinar campaign.", triggers:"experiment_performance_stats · performance_metrics" },
+  { job:"read", official:true, text:"Summarize the engagement and pipeline for Acme Corp.", triggers:"get_account_summary_insights" },
+  { job:"read", official:false, text:"How are we pacing today? Pull performance and show me spend, CPL, and pipeline by channel.", triggers:"performance_metrics · account_level_stats · agent example" },
+  // Manage spend — official
+  { job:"act", official:true, text:"Pause every campaign with zero conversions in the last 14 days.", triggers:"search_campaigns_by_names → manage_campaign" },
+  { job:"act", official:true, text:"Set up a budget group for the Q2 security campaigns. $50K monthly cap. Optimize for pipeline.", triggers:"create_budget_group" },
+  { job:"act", official:true, text:"How is the Q2 security budget group performing this month?", triggers:"budget_group_performance" },
+  { job:"act", official:false, text:"Move $3k/day from the worst pipeline-per-dollar channel to the best.", triggers:"update_experiments_daily_budgets · gated, agent example" },
+  // Build audiences & creative — official
+  { job:"build", official:true, text:"Build an audience of US-based SaaS companies, 200 to 2,000 employees, $50M+ in revenue.", triggers:"create_firmographic_audience" },
+  { job:"build", official:true, text:"Build an audience of companies using Salesforce CRM and Snowflake.", triggers:"create_technographic_audience" },
+  { job:"build", official:true, text:"Build an audience of mid-market security buyers showing Bombora intent on SIEM in the last 30 days.", triggers:"create_bombora_audience" },
+  { job:"build", official:true, text:"Build a G2 Decision-stage audience for the CRM software category.", triggers:"create_g2_metadata_dynamic_audience" },
+  { job:"build", official:true, text:"Generate a LinkedIn single-image creative for our security webinar. Brand kit colors. Hero text: 'See your account graph in 15 minutes.'", triggers:"generate_brand_creative · get_brand_kit" },
 ];
 
 const JOBS = [
