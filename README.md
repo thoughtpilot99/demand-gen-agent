@@ -30,32 +30,26 @@ Two scheduled jobs run alongside the chat: an **intraday pacing watch** that cat
 
 ## Quickstart
 
-You need three things: a Claude API key, a MetadataONE access token, and a Slack app.
+Two ways to run it, both one command. Either way you need three keys: a Claude API key, a MetadataONE access token, and a Slack app.
 
 ```bash
 git clone https://github.com/thoughtpilot99/demand-gen-agent
 cd demand-gen-agent
-npm install
-cp .env.example .env
+
+# Option A — npm (Node 20+): interactive setup scaffolds .env and validates every key
+npm install && npm run setup && npm run dev
+
+# Option B — Docker (no local Node): fill .env, then up
+cp .env.example .env && docker compose up
 ```
+
+`npm run setup` walks you through each key, writes `.env`, then checks them live: it pings Claude, opens the MetadataONE MCP connection and counts your tools, and confirms the Slack auth. Green across the board means you are ready. The three keys:
 
 1. **Claude.** API key from [console.anthropic.com](https://console.anthropic.com), set `ANTHROPIC_API_KEY`.
-2. **MetadataONE.** In Metadata, open **Settings, Access Token**, generate one for the MCP server, set `METADATAONE_TOKEN`.
+2. **MetadataONE.** You must be an account admin. In Metadata, open **Settings → Access Token → Generate Access Token for MCP Server**, accept the security warning, copy it, and set `METADATAONE_TOKEN`. The server URL is `https://mcp-server.metadata.io/mcp` (already the default). This is the same token Metadata's own "connect to Claude" guide uses ([help.metadata.io](https://help.metadata.io/portal/articles/metadata-mcp-how-to-connect)); the difference is this agent passes it over the API so it can run in Slack and on a schedule, instead of you connecting it to the Claude app by hand.
 3. **Slack.** Create an app at [api.slack.com/apps](https://api.slack.com/apps) with **Socket Mode** on. Set `SLACK_BOT_TOKEN` (`xoxb-`), `SLACK_APP_TOKEN` (`xapp-`), and `SLACK_SIGNING_SECRET`.
 
-Map your MetadataONE tool names (they vary by tenant):
-
-```bash
-npm run probe   # lists every tool your tenant exposes; set the names in .env
-```
-
-Set your guardrails in `.env`, then bring it online:
-
-```bash
-npm run dev
-```
-
-Go to your `#paid-media` channel and message it. Ask it how you are pacing.
+The defaults are the real MetadataONE tool names. To confirm them against your tenant, run `npm run probe` (it lists every tool you can invoke). Then go to your `#paid-media` channel, invite the app with `/invite @your-app`, and message it. Ask it how you are pacing.
 
 ### Slack app scopes
 
@@ -72,7 +66,7 @@ Everything is in `.env` (see `.env.example`).
 | `CPL_CEILING_USD` | When a channel crosses this CPL, the guard kicks in | `140` |
 | `PACING_CRON` | How often the intraday watch runs | `*/15 7-19 * * 1-5` |
 | `WEEKLY_CRON` | When the weekly readout posts | `0 9 * * 1` |
-| `MCP_TOOL_*` | Names of the MetadataONE write/read tools in your tenant | run `npm run probe` |
+| `MCP_TOOL_PERFORMANCE` / `MCP_TOOL_MANAGE_CAMPAIGN` / `MCP_TOOL_UPDATE_BUDGETS` | Real MetadataONE tool names (`performance_metrics`, `manage_campaign`, `update_experiments_daily_budgets`) | confirm via `npm run probe` |
 
 ## Project layout
 
@@ -107,7 +101,7 @@ The guide serves at `/`, the dashboard at `/dashboard`.
 
 - The approval queue is in memory so this stays a single thing to run. Back it with Redis or a table before production so a restart never drops a pending move (one swap in `src/guardrails.ts`).
 - Start with a low `AUTO_APPROVE_DAILY_USD` and watch a few cycles before you loosen it.
-- The default MetadataONE tool names are a starting point. Always confirm them with `npm run probe` against your own tenant.
+- The default tool names are the real MetadataONE names (`performance_metrics`, `manage_campaign`, `update_experiments_daily_budgets`, out of 70 tools across 14 categories). Confirm them with `npm run probe` against your own tenant in case Metadata ships a rename.
 
 ## License
 

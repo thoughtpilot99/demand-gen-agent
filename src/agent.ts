@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { config, type Channel } from "./config.js";
 import { systemPrompt } from "./prompts.js";
 import { evaluate, enqueue, type ProposedChange } from "./guardrails.js";
-import { pauseAdSet, updateBid, moveBudget } from "./metadata.js";
+import { pauseCampaign, rebidCampaign, moveBudget } from "./metadata.js";
 
 /**
  * The agent loop. Claude runs on Opus 4.8 with adaptive thinking. It reads live
@@ -51,9 +51,11 @@ function metadataToolset(): any {
     type: "mcp_toolset",
     mcp_server_name: "metadataone",
     configs: {
-      [t.pause]: { enabled: false },
-      [t.setBid]: { enabled: false },
-      [t.moveBudget]: { enabled: false },
+      // Deny the spend-mutating tools to the connector so Claude cannot change
+      // spend with it. Every change is routed through our guarded tools below.
+      [t.manageCampaign]: { enabled: false },
+      [t.updateBudgets]: { enabled: false },
+      launch_campaign: { enabled: false },
     },
   };
 }
@@ -136,7 +138,7 @@ async function execTool(name: string, input: any, onApproval?: ApprovalNotifier)
         dailyUsd: 0,
         summary: `Paused ${ids.length} ${channel} ad set${ids.length === 1 ? "" : "s"}. ${reason}`,
         execute: async () => {
-          for (const id of ids) await pauseAdSet(channel, id, reason);
+          for (const id of ids) await pauseCampaign(channel, id, reason);
         },
       },
       onApproval,
@@ -154,7 +156,7 @@ async function execTool(name: string, input: any, onApproval?: ApprovalNotifier)
         dailyUsd: 0,
         summary: `Rebid ${channel} campaign ${campaignId} to ${bid}. ${reason}`,
         execute: async () => {
-          await updateBid(channel, campaignId, bid);
+          await rebidCampaign(channel, campaignId, bid, reason);
         },
       },
       onApproval,

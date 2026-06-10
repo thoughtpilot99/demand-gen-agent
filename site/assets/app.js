@@ -20,12 +20,12 @@ const SAMPLE = {
     { key: 'x',        name: 'X',        spend: 7600,  cpc: 2.10,  cpl: 176, mqls: 43,  pipeline: 18240,  roas: 2.4, cplDelta: 6 },
   ],
   agents: [
-    { agent: 'Budget Agent', status: 'pending', time: 'now', text: 'Move <b>$4,200/day</b> from <b>Meta → LinkedIn</b>. LinkedIn returns <b>4.6x</b> pipeline per dollar vs Meta at 3.8x. Sent to <b>Slack</b> for your sign-off.' },
-    { agent: 'Bid Agent', status: 'done', time: '6m ago', text: 'Rebid your top <b>Google</b> auctions as rivals raised bids. Held CPL at <b>$96</b>.' },
-    { agent: 'Guard Agent', status: 'done', time: '23m ago', text: 'Paused <b>2 Meta ad sets</b> the moment CPL crossed target. Creative fatigue, caught intraday, not at month-end.' },
+    { agent: 'Campaign Execution Agent', status: 'pending', time: 'now', text: 'Move <b>$4,200/day</b> from <b>Meta → LinkedIn</b>. LinkedIn returns <b>4.6x</b> pipeline per dollar vs Meta at 3.8x. Sent to <b>Slack</b> for your sign-off.' },
+    { agent: 'Bid Agent', status: 'done', time: '6m ago', text: 'Optimized your top <b>Google</b> bids as rivals raised theirs. Held CPL at <b>$96</b>.' },
+    { agent: 'Analyst Agent', status: 'done', time: '23m ago', text: 'Flagged <b>Meta</b> CPL crossing target intraday and paused <b>2 campaigns</b>. Creative fatigue, caught intraday, not at month-end.' },
     { agent: 'Creative Agent', status: 'pending', time: '1h ago', text: 'Generated <b>3 new LinkedIn variants</b> from your brand kit for the AI Buyers segment.' },
-    { agent: 'Audience Agent', status: 'done', time: '2h ago', text: 'Built an intent audience of <b>1,240 accounts</b> surging on agentic GTM.' },
-    { agent: 'Match Agent', status: 'done', time: '3h ago', text: 'Matched <b>6,810</b> anonymous visitors to accounts. 38 went to retargeting.' },
+    { agent: 'Targeting Agent', status: 'done', time: '2h ago', text: 'Built a <b>Bombora</b> intent audience of <b>1,240 accounts</b> surging on agentic GTM.' },
+    { agent: 'MetaMatch', status: 'done', time: '3h ago', text: 'Matched <b>6,810</b> anonymous visitors to accounts. 38 went to retargeting.' },
   ],
 };
 

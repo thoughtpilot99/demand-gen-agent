@@ -62,7 +62,7 @@ export interface ChannelMetrics {
  * decide when to wake the agent.
  */
 export async function getPerformance(windowHours = 24): Promise<ChannelMetrics[]> {
-  const raw = (await call(config.metadata.tools.getPerformance, { window_hours: windowHours })) as unknown;
+  const raw = (await call(config.metadata.tools.performance, { window_hours: windowHours })) as unknown;
   const rows = extractRows(raw);
   return rows.map((r) => ({
     channel: String(r.channel ?? r.platform ?? "").toLowerCase() as Channel,
@@ -73,17 +73,32 @@ export async function getPerformance(windowHours = 24): Promise<ChannelMetrics[]
 }
 
 // ── Writes (every one gated upstream by guardrails + Slack approval) ─────────
+// These map to the real MetadataONE write tools. Pausing and bid adjustments go
+// through manage_campaign; budget moves through update_experiments_daily_budgets.
+// (Continuous bid optimization is also handled autonomously by Metadata's Bid
+// Agent; this is the agent reaching in to act on a specific call.)
 
-export async function pauseAdSet(channel: Channel, adSetId: string, reason: string) {
-  return call(config.metadata.tools.pause, { channel, ad_set_id: adSetId, reason });
+export async function pauseCampaign(channel: Channel, campaignId: string, reason: string) {
+  return call(config.metadata.tools.manageCampaign, {
+    channel,
+    campaign_id: campaignId,
+    action: "pause",
+    reason,
+  });
 }
 
-export async function updateBid(channel: Channel, campaignId: string, bid: number) {
-  return call(config.metadata.tools.setBid, { channel, campaign_id: campaignId, bid });
+export async function rebidCampaign(channel: Channel, campaignId: string, bid: number, reason: string) {
+  return call(config.metadata.tools.manageCampaign, {
+    channel,
+    campaign_id: campaignId,
+    action: "update_bid",
+    bid,
+    reason,
+  });
 }
 
 export async function moveBudget(from: Channel, to: Channel, dailyUsd: number, reason: string) {
-  return call(config.metadata.tools.moveBudget, {
+  return call(config.metadata.tools.updateBudgets, {
     from_channel: from,
     to_channel: to,
     daily_usd: dailyUsd,

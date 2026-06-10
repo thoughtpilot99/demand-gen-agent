@@ -39,14 +39,15 @@ export const config = {
     mcpUrl: opt("METADATAONE_MCP_URL", "https://mcp-server.metadata.io/mcp"),
     token: req("METADATAONE_TOKEN"),
     /**
-     * Tool names on your MetadataONE MCP server. Defaults are a starting point;
-     * run `npm run probe` to list the real ones in your tenant and set them here.
+     * Real MetadataONE MCP tool names (from help.metadata.io, "Metadata MCP -
+     * Supported Tools": 70 tools across 14 categories). These are the spend
+     * actions the agent drives. Run `npm run probe` to confirm them against your
+     * own tenant, then override here if Metadata ships a rename.
      */
     tools: {
-      getPerformance: opt("MCP_TOOL_GET_PERFORMANCE", "get_performance"),
-      pause: opt("MCP_TOOL_PAUSE", "pause_ad_set"),
-      setBid: opt("MCP_TOOL_SET_BID", "update_bid"),
-      moveBudget: opt("MCP_TOOL_MOVE_BUDGET", "move_budget"),
+      performance: opt("MCP_TOOL_PERFORMANCE", "performance_metrics"),
+      manageCampaign: opt("MCP_TOOL_MANAGE_CAMPAIGN", "manage_campaign"),
+      updateBudgets: opt("MCP_TOOL_UPDATE_BUDGETS", "update_experiments_daily_budgets"),
     },
   },
 
